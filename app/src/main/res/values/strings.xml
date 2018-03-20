@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">UberAndroid</string>
+    <string name="title_activity_maps">Map</string>
+    <string name="google_direction_api">AIzaSyAvdjce88LDyTxkA68zc3BVOjFY9hm031k</string>
 </resources>

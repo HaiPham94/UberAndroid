@@ -1,9 +1,10 @@
 package com.example.haipham.uberandroid;
 
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
-import android.support.v7.app.AlertDialog;
+
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -13,6 +14,7 @@ import android.widget.RelativeLayout;
 
 import com.example.haipham.uberandroid.model.User;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.rengwuxian.materialedittext.MaterialEditText;
@@ -20,6 +22,7 @@ import com.rengwuxian.materialedittext.MaterialEditText;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import dmax.dialog.SpotsDialog;
 
 public class MainActivity extends AppCompatActivity {
     @BindView(R.id.btnSignIn)
@@ -42,6 +45,11 @@ public class MainActivity extends AppCompatActivity {
         auth = FirebaseAuth.getInstance();
         db = FirebaseDatabase.getInstance();
         users = db.getReference("Users");
+
+//        btnSignIn = findViewById(R.id.btnSignIn);
+//        btnRegister = findViewById(R.id.btnRegister);
+//        btnRegister.setOnClickListener(v -> showRegisterDialog());
+//        btnSignIn.setOnClickListener(v -> showSignInDialog());
     }
     @OnClick({R.id.btnSignIn, R.id.btnRegister})
     public void OnClick(View v){
@@ -68,8 +76,10 @@ public class MainActivity extends AppCompatActivity {
 
         dialog.setView(register_layout);
 
+
         dialog.setPositiveButton("SIGN IN", (dialogInterface, i) -> {
             dialogInterface.dismiss();
+            btnSignIn.setEnabled(false);
             if(TextUtils.isEmpty(edtEmail.getText().toString())){
                 Snackbar.make(rootLayout, "Please enter email address", Snackbar.LENGTH_SHORT).show();
                 return;
@@ -82,14 +92,19 @@ public class MainActivity extends AppCompatActivity {
                 Snackbar.make(rootLayout, "Password too short !!!", Snackbar.LENGTH_SHORT).show();
                 return;
             }
+            AlertDialog waittingDialog = new SpotsDialog(MainActivity.this);
+            waittingDialog.show();
             //Sign in
             auth.signInWithEmailAndPassword(edtEmail.getText().toString(),edtPass.getText().toString())
             .addOnSuccessListener(authResult -> {
-                startActivity(new Intent(MainActivity.this, WelcomeActivity.class));
+                waittingDialog.dismiss();
+                startActivity(new Intent(MainActivity.this, MapsActivity.class));
                 finish();
             })
             .addOnFailureListener(e -> {
+                waittingDialog.dismiss();
                 Snackbar.make(rootLayout, "Failed " + e.getMessage(), Snackbar.LENGTH_SHORT).show();
+                btnSignIn.setEnabled(true);
             });
 
         });
@@ -141,7 +156,7 @@ public class MainActivity extends AppCompatActivity {
                         user.setName(edtName.getText().toString());
                         user.setPhone(edtPhone.getText().toString());
 
-                        users.child(user.getEmail())
+                        users.child(FirebaseAuth.getInstance().getCurrentUser().getUid())
                                 .setValue(user)
                                 .addOnSuccessListener(aVoid -> {
                                     Snackbar.make(rootLayout, "Register Successfully", Snackbar.LENGTH_SHORT).show();
